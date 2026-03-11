@@ -1,55 +1,41 @@
 #!/bin/bash
 
-# 1. Configuration
+# 1. Config
 UNIQUE_ID=$(date +%s)
-PROJECT_ID="dolphin-app-$UNIQUE_ID"
-USER_EMAIL=$(gcloud config get-value account)
+PROJECT_ID="admob-dash-$UNIQUE_ID"
+ORG_ID=$(gcloud organizations list --format="value(ID)" --limit=1)
 
-echo "--- Starting Smart Dolphin Setup ---"
-echo "Detected Account: $USER_EMAIL"
+echo "------------------------------------------------"
+echo "🚀 STARTING ADMOB SETUP"
+echo "------------------------------------------------"
 
-# 2. Create Project
-gcloud projects create $PROJECT_ID --name="Dolphin Project $UNIQUE_ID"
-gcloud config set project $PROJECT_ID
-
-# 3. Enable APIs
-echo "Enabling AdMob API... please wait."
-gcloud services enable admob.googleapis.com --quiet
-
-# 4. Intelligence Logic: Detect Account Type
-if [[ "$USER_EMAIL" == *"@gmail.com" ]]; then
-    # --- PERSONAL ACCOUNT FLOW ---
-    echo "------------------------------------------------"
-    echo "PERSONAL GMAIL ACCOUNT DETECTED"
-    echo "Google requires you to manually confirm the Consent Screen."
-    echo "------------------------------------------------"
-    echo "1. Open this link: https://console.cloud.google.com/apis/credentials/consent?project=$PROJECT_ID"
-    echo "2. Select 'EXTERNAL' and click 'CREATE'."
-    echo "3. Fill in 'App Name' (anything) and your email for support/contact."
-    echo "4. Click 'SAVE AND CONTINUE' through the next 3 screens."
-    echo "------------------------------------------------"
-    read -p "Press [Enter] once you have clicked 'Back to Dashboard'..."
+# 2. Project Creation
+if [ -n "$ORG_ID" ]; then
+    echo "🏢 Creating Workspace Project..."
+    gcloud projects create $PROJECT_ID --organization="$ORG_ID" --quiet
 else
-    # --- WORKSPACE/ORG FLOW ---
-    echo "Workspace account detected. Attempting automated branding..."
-    # We use a subshell to catch errors if they aren't actually in an Org
-    gcloud iap oauth-brands create --application_title="Dolphin App" --support_email="$USER_EMAIL" --quiet 2>/dev/null
+    echo "👤 Creating Personal Project..."
+    gcloud projects create $PROJECT_ID --quiet
 fi
 
-# 5. Create the Client ID
-# We use 'default' as the brand name which works for most personal/new projects
-echo "Finalizing OAuth Client ID..."
-CLIENT_INFO=$(gcloud alpha iap oauth-clients create projects/$PROJECT_ID/brands/default --display_name="Dolphin-Client" 2>&1)
+gcloud config set project $PROJECT_ID
 
-# 6. Save and Display
-echo "------------------------------------------------" > credentials.txt
-echo "DOLPHIN SETUP RESULTS" >> credentials.txt
-echo "Project ID: $PROJECT_ID" >> credentials.txt
-echo "" >> credentials.txt
-echo "$CLIENT_INFO" >> credentials.txt
-echo "------------------------------------------------" >> credentials.txt
+# 3. Enable AdMob API
+echo "⚙️  Enabling AdMob API... (Wait about 30 seconds)"
+gcloud services enable admob.googleapis.com --quiet
 
-# Open the file for the user automatically
-cloudshell edit credentials.txt
+# 4. Teleport to the Finish Line
+echo "------------------------------------------------"
+echo "✅ CLOUD INFRASTRUCTURE READY"
+echo "------------------------------------------------"
+echo "Opening your browser to the final step..."
 
-echo "SUCCESS! Please see the credentials.txt file opened above."
+# This opens the OAuth Client Creation page directly
+cloudshell launch-browser "https://console.cloud.google.com/apis/credentials/oauthclient?project=$PROJECT_ID"
+
+echo ""
+echo "IN THE NEW TAB:"
+echo "1. If it asks to 'Configure Consent Screen', do that first (takes 10 seconds)."
+echo "2. Select 'Web application'."
+echo "3. Add http://localhost, http://localhost:3000 and http://localhost:8080 to 'Authorized JavaScript origins'."
+echo "4. Click CREATE."
