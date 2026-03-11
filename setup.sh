@@ -31,7 +31,7 @@ echo "------------------------------------------------"
 echo "Opening your browser to the final step..."
 
 # This opens the OAuth Client Creation page directly
-cloudshell launch-browser "https://console.cloud.google.com/apis/credentials/oauthclient?project=$PROJECT_ID"
+cloudshell open "https://console.cloud.google.com/apis/credentials/oauthclient?project=$PROJECT_ID"
 
 echo ""
 echo "IN THE NEW TAB:"
